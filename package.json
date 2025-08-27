@@ -11,6 +11,8 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",
     "@radix-ui/react-select": "^2.2.5",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.56.0",
     "bignumber.js": "4.0.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
