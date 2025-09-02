@@ -1,8 +1,10 @@
 "use client";
 import Script from "next/script";
 import React from "react";
+import { useGoogleLogin } from "../useGoogleLogin";
 
 function GoogleLoginButton() {
+  useGoogleLogin();
   return (
     <>
       <Script src="https://accounts.google.com/gsi/client" async />

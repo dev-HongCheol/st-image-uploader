@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+
 import type { CredentialResponse } from "google-one-tap";
+import { clientSupabase } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 declare global {
   interface Window {
@@ -11,6 +13,8 @@ declare global {
 }
 
 export function useGoogleLogin() {
+  const router = useRouter();
+
   useEffect(() => {
     if (window.handleGoogleLogin) return;
 
@@ -20,13 +24,14 @@ export function useGoogleLogin() {
         return;
       }
 
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithIdToken({
+      const supabase = clientSupabase();
+      const { data, error } = await supabase.auth.signInWithIdToken({
         provider: "google",
         token: response.credential,
       });
 
-      if (!error) {
+      if (!error && data.user) {
+        router.push("/");
       }
     };
   }, []);
