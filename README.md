@@ -1,37 +1,24 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# supabase self hosting
+### docker
+- https://supabase.com/docs/guides/self-hosting
+- postgres의 비밀번호 변경
+  - 변경하기 위해서 .env파일의 `POSTGRES_PASSWORD` 변경 시 일부 컨테이너에서 비밀번호 에러가 발생함.(모든 컨테이너의 설정이 정상적으로 변경이 안되는 것으로 보임)
+  - https://github.com/supabase/supabase/issues/22605#issuecomment-2455781878
+    - 일부 계정이 없다고 에러 나지만 우선 대시보드 클릭한 메뉴들 중에 오류를 표시하는 경우는 현재 없음.
 
-## Getting Started
+### google auth 설정
+- id, password 방식만 기본적으로 지원하여 google auth를 사용하기 위한 설정 추가
+- https://www.reddit.com/r/Supabase/comments/1h46b6d/set_up_selfhosted_supabase_auth_with_github_oauth/
+    ```yml
+    auth
+        environment
+            GOTRUE_EXTERNAL_GOOGLE_ENABLED: "true"
+            GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: "..."
+            GOTRUE_EXTERNAL_GOOGLE_SECRET: "..."
+            GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: "..."
+    ```
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# st-image-uploader
+## todo
+1. 나말고는 회원가입 막기.(현재는 구글 로그인이라..자동회원가입임. 하지만 내 메일을 체크해서 나머지는 막는 형태)
