@@ -4,6 +4,9 @@ const ROUTE = {
       path: "/auth/login",
     },
   },
+  main: {
+    path: "/",
+  },
 };
 
 export default ROUTE;

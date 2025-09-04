@@ -13,6 +13,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { User } from "@supabase/supabase-js";
+import FileUploadButton from "./FileUploadButton";
 import { ModeSelectDropdown } from "./ModeSelectDropdown";
 import { SearchForm } from "./SearchForm";
 
@@ -88,7 +89,10 @@ export function AppSidebar({ user, ...props }: Props) {
     <Sidebar {...props}>
       <SidebarHeader>
         <p>{user.email}</p>
-        <ModeSelectDropdown />
+        <div className="flex gap-2">
+          <FileUploadButton />
+          <ModeSelectDropdown />
+        </div>
         <SearchForm />
       </SidebarHeader>
       <SidebarContent>
