@@ -3,4 +3,9 @@ const BUCKET_NAMES = {
   THUMBNAILS: "thumbnails",
 };
 
-export { BUCKET_NAMES };
+const FUNCTION_NAMES = {
+  GENERATE_THUMBNAIL_JS: "generate-thumbnail-js",
+  GENERATE_THUMBNAIL_MAGICK: "generate-thumbnail-magick",
+};
+
+export { BUCKET_NAMES, FUNCTION_NAMES };
