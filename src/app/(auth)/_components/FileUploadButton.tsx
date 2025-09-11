@@ -63,12 +63,17 @@ const FileUploadButton = () => {
         }
 
         if (imageThumbnailType !== "none" && thumbnail) {
+          const thumbnailImageFilename = file.name.replace(/\.[^/.]+$/, "");
           const thumbnailUploadRes = await supabase.storage
             .from(BUCKET_NAMES.THUMBNAILS)
-            .upload(`${userId}/${file.name}`, await thumbnail.arrayBuffer(), {
-              cacheControl: "3600",
-              contentType: "image/jpeg",
-            });
+            .upload(
+              `${userId}/${thumbnailImageFilename}.jpeg`,
+              await thumbnail.arrayBuffer(),
+              {
+                cacheControl: "3600",
+                contentType: "image/jpeg",
+              },
+            );
 
           // 썸네일 업로드 실패한 경우
           if (thumbnailUploadRes.error) {
