@@ -1,29 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { BUCKET_NAMES, FUNCTION_NAMES } from "@/constants/common";
+import { BUCKET_NAMES } from "@/constants/common";
 import { clientSupabase } from "@/utils/supabase/client";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { CloudUpload } from "lucide-react";
 import { ChangeEvent, MouseEvent, useCallback, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import heic2any from "heic2any";
-
-const convertHeicToJpeg = async (imageFile: File) => {
-  return await heic2any({
-    blob: imageFile,
-    toType: "image/jpeg",
-    quality: 0.8,
-  });
-};
-
-type StorageUploadResponse = Awaited<
-  ReturnType<SupabaseClient["storage"]["from"]>["upload"]
->;
+import useThumbnail from "./useThumbnail";
 
 const FileUploadButton = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = useMemo(() => clientSupabase(), []);
+  const { getImageThumbnailType, createThumbnail } = useThumbnail();
 
   const handleClickFileBtn = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -46,44 +34,9 @@ const FileUploadButton = () => {
     fileUpload([...files]);
   };
 
-  // 전달받은 파일의 이름에서 확장자를 기준으로 썸네일 생성.
-  const processImageThumbnail = (filePath: string) => {
-    // 2. 확장자 확인 후 썸네일 생성 여부 결정
-    const fileExtension = filePath.split(".").pop()?.toLowerCase() || "";
-    // 가벼운 포맷은 ImageScript
-    if (["jpg", "jpeg", "png", "gif"].includes(fileExtension)) {
-      return supabase.functions.invoke<StorageUploadResponse>(
-        FUNCTION_NAMES.GENERATE_THUMBNAIL_JS,
-        {
-          method: "POST",
-          body: {
-            imagePath: filePath,
-          },
-        },
-      );
-    }
-
-    // 복잡한 포맷만 ImageMagick
-    if (["heic", "webp", "raw"].includes(fileExtension)) {
-      return supabase.functions.invoke<StorageUploadResponse>(
-        FUNCTION_NAMES.GENERATE_THUMBNAIL_MAGICK,
-        {
-          method: "POST",
-          body: {
-            imagePath: filePath,
-          },
-        },
-      );
-    }
-
-    // 나머지는 원본 사용
-    // TODO:
-    return "NONE";
-  };
-
   const fileUpload = async (files: File[], batchSize = 5) => {
     const user = (await supabase.auth.getUser()).data.user;
-    const userId = user?.id;
+    const userId = user?.id || "";
 
     console.log(`총 ${files.length}개 파일을 ${batchSize}개씩 나누어 업로드`);
 
@@ -95,19 +48,40 @@ const FileUploadButton = () => {
 
       // 현재 배치의 파일들을 Promise.all로 동시 업로드
       const batchPromises = batch.map(async (file) => {
-        const resThumbNail = await convertHeicToJpeg(file);
-        console.log("🚀 ~ fileUpload ~ resThumbNail_", resThumbNail);
-        const thumbnail = Array.isArray(resThumbNail)
-          ? resThumbNail[0]
-          : resThumbNail;
-        const upload = await supabase.storage
-          .from(BUCKET_NAMES.THUMBNAILS)
-          .upload(`${userId}/${file.name}`, await thumbnail.arrayBuffer(), {
-            cacheControl: "3600",
-            contentType: thumbnail.type,
-          });
-        console.log("🚀 ~ fileUpload ~ upload_", upload);
+        console.log("🚀 ~ fileUpload ~ file:", file);
+        let thumbnail = null;
 
+        // 확장자를 확인 후 썸네일 생성
+        const imageThumbnailType = getImageThumbnailType(file.name);
+        if (imageThumbnailType !== "none")
+          thumbnail = await createThumbnail(imageThumbnailType, file);
+        console.log("🚀 ~ fileUpload ~ thumbnail_", thumbnail);
+
+        // 썸네일을 샏성해야하는 확장자이지만 정상적으로 생성이 안된 경우 리턴
+        if (imageThumbnailType !== "none" && !thumbnail) {
+          throw new Error(`${file.name} Thumbnail create error`);
+        }
+
+        if (imageThumbnailType !== "none" && thumbnail) {
+          const thumbnailUploadRes = await supabase.storage
+            .from(BUCKET_NAMES.THUMBNAILS)
+            .upload(`${userId}/${file.name}`, await thumbnail.arrayBuffer(), {
+              cacheControl: "3600",
+              contentType: "image/jpeg",
+            });
+
+          // 썸네일 업로드 실패한 경우
+          if (thumbnailUploadRes.error) {
+            toast.error(`${files[i].name} thumbnail upload failed`, {
+              duration: Infinity,
+              closeButton: true,
+              description: thumbnailUploadRes.error.message,
+            });
+            throw new Error(`${file.name} Thumbnail upload error`);
+          }
+        }
+
+        // 원본 이미지 업로드
         return supabase.storage
           .from(BUCKET_NAMES.ORIGINALS)
           .upload(`${userId}/${file.name}`, file, {
@@ -119,20 +93,15 @@ const FileUploadButton = () => {
       const uploadRes = await Promise.all(batchPromises);
 
       uploadRes.map(async (res) => {
-        if (!res.error) {
-          console.log("🚀 ~ fileUpload ~ res.data_", res.data);
-
-          const thumbnailRes = await processImageThumbnail(res.data.fullPath);
-
-          if (thumbnailRes)
-            toast.success(`${files[i].name} upload success`, {
-              closeButton: true,
-            });
+        if (res && !res.error) {
+          toast.success(`${files[i].name} upload success`, {
+            closeButton: true,
+          });
         } else {
           toast.error(`${files[i].name} upload failed`, {
             duration: Infinity,
             closeButton: true,
-            description: res.error.message,
+            description: res?.error.message,
           });
         }
       });
