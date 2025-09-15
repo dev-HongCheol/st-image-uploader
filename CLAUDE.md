@@ -55,3 +55,4 @@ The project uses self-hosted Supabase with Docker. See README.md for setup detai
 - Uses Geist fonts (sans and mono)
 - File upload functionality is in development
 - Access restricted to specific users (owner's Gmail only)
+- generate all methods add comment

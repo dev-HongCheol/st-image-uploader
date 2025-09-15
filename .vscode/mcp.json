@@ -1,0 +1,25 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "supabase-url",
+      "description": "Local Supabase URL"
+    },
+    {
+      "type": "promptString",
+      "id": "supabase-service-key",
+      "description": "Local Supabase service role key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "supabase-local": {
+      "command": "npx",
+      "args": ["-y", "@supabase/mcp-server-supabase@latest"],
+      "env": {
+        "NEXT_PUBLIC_SUPABASE_URL": "${input:supabase-url}",
+        "SUPA_ANON_TOKEN": "${input:supabase-service-key}"
+      }
+    }
+  }
+}
