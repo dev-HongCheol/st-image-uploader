@@ -271,13 +271,26 @@ export async function getUserFolderTree(
 ): Promise<FolderTreeNode[]> {
   const supabase = await createClient();
 
-  // 폴더 정보와 통계를 함께 조회
-  const { data: folders } = await supabase
+  // 사용자가 만든 논리적 폴더만 조회 (시스템 폴더 제외)
+  let query = supabase
     .from("folder_tree_view") // 뷰 사용
     .select("*")
     .eq("user_id", userId)
-    .eq("parent_id", parentId)
+    .eq("is_system_folder", false) // 시스템 폴더 제외
     .order("name");
+
+  // parent_id가 null인 경우와 값이 있는 경우를 다르게 처리
+  if (parentId === null) {
+    query = query.is("parent_id", null);
+  } else {
+    query = query.eq("parent_id", parentId);
+  }
+
+  const { data: folders, error } = await query;
+  if (error) {
+    console.error("폴더 트리 조회 오류:", error);
+    return [];
+  }
 
   if (!folders) return [];
 
@@ -360,6 +373,7 @@ export async function getFolderFiles(
  * @param userId - 사용자 ID
  * @param file - 업로드할 파일 정보
  * @param uploadInfo - 업로드 결과 정보
+ * @param targetFolderId - 업로드할 대상 폴더 ID (없으면 루트 폴더)
  * @returns 데이터베이스 insert용 객체
  */
 export async function createFileRecord(
@@ -371,12 +385,21 @@ export async function createFileRecord(
     thumbnailPath?: string;
     thumbnailSize?: number;
   },
+  targetFolderId?: string,
 ): Promise<UploadedFileInsert> {
-  // 활성 저장 폴더 가져오기
+  // 활성 저장 폴더 가져오기 (물리적 저장용)
   const storageFolder = await getOrCreateActiveStorageFolder(userId);
 
-  // 대응하는 논리적 폴더 가져오기
-  const logicalFolder = await getOrCreateLogicalFolder(userId, storageFolder);
+  // 논리적 폴더 결정 (기본값: 루트 폴더)
+  let logicalFolderId: string;
+  if (targetFolderId) {
+    // 드래그 앤 드롭 등으로 특정 폴더에 업로드하는 경우
+    logicalFolderId = targetFolderId;
+  } else {
+    // 기본 업로드: 루트 폴더에 업로드
+    const rootFolder = await getOrCreateUserRoot(userId);
+    logicalFolderId = rootFolder.id;
+  }
 
   // 파일 타입 결정
   const getFileType = (
@@ -395,8 +418,8 @@ export async function createFileRecord(
 
   return {
     user_id: userId,
-    folder_id: logicalFolder.id,
-    storage_folder_id: storageFolder.id,
+    folder_id: logicalFolderId, // 논리적 폴더 위치 (루트 폴더 또는 지정된 폴더)
+    storage_folder_id: storageFolder.id, // 물리적 저장 위치
     original_filename: file.name,
     stored_filename: uploadInfo.storedFilename,
     display_filename: file.name, // 초기값은 원본 파일명

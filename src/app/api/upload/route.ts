@@ -187,30 +187,20 @@ async function processFile(
       };
     }
 
-    // 4. 파일 레코드 생성
-    const fileRecord = await createFileRecord(userId, file, {
-      filePath: originalFileInfo.path,
-      storedFilename: originalFileInfo.storedFilename,
-      thumbnailPath: thumbnailInfo?.path,
-      thumbnailSize: thumbnailInfo?.size,
-    });
+    // 4. 파일 레코드 생성 (targetFolderId를 직접 전달)
+    const fileRecord = await createFileRecord(
+      userId, 
+      file, 
+      {
+        filePath: originalFileInfo.path,
+        storedFilename: originalFileInfo.storedFilename,
+        thumbnailPath: thumbnailInfo?.path,
+        thumbnailSize: thumbnailInfo?.size,
+      },
+      targetFolderId || undefined // 기본값: 루트 폴더
+    );
 
-    // 5. 특정 폴더 지정된 경우 설정
-    if (targetFolderId) {
-      const { data: targetFolder } = await supabase
-        .from("folders")
-        .select("user_id")
-        .eq("id", targetFolderId)
-        .single();
-
-      if (!targetFolder || targetFolder.user_id !== userId) {
-        throw new Error("Invalid target folder or permission denied");
-      }
-
-      fileRecord.folder_id = targetFolderId;
-    }
-
-    // 6. 데이터베이스에 파일 정보 저장
+    // 5. 데이터베이스에 파일 정보 저장
     const { data: insertedFile, error: insertError } = await supabase
       .from("uploaded_files")
       .insert(fileRecord)
@@ -228,7 +218,7 @@ async function processFile(
       throw insertError;
     }
 
-    // 7. 저장 폴더 카운트 증가
+    // 6. 저장 폴더 카운트 증가
     await incrementStorageFolderCount(storageFolder.id, file.size);
 
     return {
