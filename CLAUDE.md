@@ -55,4 +55,11 @@ The project uses self-hosted Supabase with Docker. See README.md for setup detai
 - Uses Geist fonts (sans and mono)
 - File upload functionality is in development
 - Access restricted to specific users (owner's Gmail only)
-- generate all methods add comment
+
+
+### Code Generation Rules
+
+- 모든 함수에 JSDoc 주석 추가 필수
+- TypeScript 타입 정의 포함
+- 에러 핸들링 코드 포함
+- 한국어 주석으로 복잡한 로직 설명

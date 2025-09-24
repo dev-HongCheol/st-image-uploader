@@ -1,24 +1,11 @@
 {
-  "inputs": [
-    {
-      "type": "promptString",
-      "id": "supabase-url",
-      "description": "Local Supabase URL"
-    },
-    {
-      "type": "promptString",
-      "id": "supabase-service-key",
-      "description": "Local Supabase service role key",
-      "password": true
-    }
-  ],
   "servers": {
     "supabase-local": {
       "command": "npx",
       "args": ["-y", "@supabase/mcp-server-supabase@latest"],
       "env": {
-        "NEXT_PUBLIC_SUPABASE_URL": "${input:supabase-url}",
-        "SUPA_ANON_TOKEN": "${input:supabase-service-key}"
+        "SUPABASE_URL": "https://supa.devhong.cc",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU"
       }
     }
   }
