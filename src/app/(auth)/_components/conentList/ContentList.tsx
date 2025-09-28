@@ -1,17 +1,12 @@
 "use client";
 
-import { Folder, UploadedFile, UploadedFileInfo } from "@/types/database";
-import {
-  File,
-  Folder as FolderIcon,
-  Image,
-  NotebookText,
-  Video,
-} from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getContentApi, ContentResponse } from "@/lib/api/content-api";
+import { getContentApi } from "@/lib/api/content-api";
+import { Folder, UploadedFileInfo } from "@/types/database";
+import { useQuery } from "@tanstack/react-query";
+import { Folder as FolderIcon } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import ContentItem from "./ContentItem";
 
 type ContentListProps = {
   initialData: {
@@ -20,22 +15,6 @@ type ContentListProps = {
     currentPath: string;
     folderId: string;
   };
-};
-
-/**
- * 파일 타입에 따른 아이콘 반환
- */
-const FileTypeIcon = (fileType: UploadedFile["file_type"]) => {
-  switch (fileType) {
-    case "document":
-      return <NotebookText />;
-    case "image":
-      return <Image />;
-    case "video":
-      return <Video />;
-    default:
-      return <File />;
-  }
 };
 
 /**
@@ -117,29 +96,9 @@ export default function ContentList({ initialData }: ContentListProps) {
         {isLoading ? (
           <div className="rounded-lg border p-4 text-gray-500">로딩 중...</div>
         ) : files && files.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4">
             {files.map((file) => (
-              <div
-                key={file.id}
-                className="flex cursor-pointer items-center rounded-lg border p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
-              >
-                <div className="mr-3">{FileTypeIcon(file.file_type)}</div>
-                <div className="flex-1">
-                  {file.signedThumbnailUrl &&
-                    file.mime_type.includes("image") && (
-                      <img
-                        src={file.signedThumbnailUrl}
-                        alt={file.display_filename}
-                        className="mb-2 h-16 w-16 rounded object-cover"
-                      />
-                    )}
-                  <div className="font-medium">{file.display_filename}</div>
-                  <div className="text-sm text-gray-500">
-                    {Math.round(file.file_size / 1024).toLocaleString()}
-                    KB
-                  </div>
-                </div>
-              </div>
+              <ContentItem key={file.id} file={file} />
             ))}
           </div>
         ) : (

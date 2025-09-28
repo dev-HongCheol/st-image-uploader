@@ -6,7 +6,7 @@ import {
   getOrCreateUserRoot,
 } from "@/utils/folder-system";
 import { createClient } from "@/utils/supabase/server";
-import ContentList from "./_components/ContentList";
+import ContentList from "./_components/conentList/ContentList";
 
 type Props = {
   searchParams: { path: string };
@@ -77,7 +77,7 @@ export default async function MainPage({ searchParams }: Props) {
   return (
     <div className="p-6">
       <h1 className="mb-4 text-2xl font-bold">내 파일</h1>
-      
+
       {/* 클라이언트 컴포넌트로 실시간 업데이트 처리 */}
       <ContentList initialData={initialData} />
     </div>

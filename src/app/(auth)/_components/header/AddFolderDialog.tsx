@@ -141,12 +141,12 @@ export default function AddFolderDialog() {
               {path ? `현재 경로: ${path}` : "/"}에 폴더를 추가합니다.
             </DialogDescription>
             <ul>
-              <li>
+              <li className="text-start!">
                 <span className="inline-block rounded bg-gray-300 p-0.5 text-xs font-normal dark:bg-gray-800">
                   이미 존재하는 폴더명은 불가능합니다.
                 </span>
               </li>
-              <li>
+              <li className="text-start!">
                 <span className="inline-block rounded bg-gray-300 p-0.5 text-xs font-normal dark:bg-gray-800">
                   '/'와 같은 특수문자는 제한됩니다.
                 </span>
