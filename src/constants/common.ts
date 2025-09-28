@@ -8,4 +8,6 @@ const FUNCTION_NAMES = {
   GENERATE_THUMBNAIL_MAGICK: "generate-thumbnail-magick",
 };
 
-export { BUCKET_NAMES, FUNCTION_NAMES };
+const ROOT_FOLDER_NAME = "My Files";
+
+export { BUCKET_NAMES, FUNCTION_NAMES, ROOT_FOLDER_NAME };

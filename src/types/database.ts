@@ -77,7 +77,7 @@ export interface UploadedFile {
   /** MIME 타입 */
   mime_type: string;
   /** 파일 분류 (UI 표시용) */
-  file_type: 'image' | 'video' | 'document' | 'other';
+  file_type: "image" | "video" | "document" | "other";
   /** 썸네일 존재 여부 */
   has_thumbnail: boolean;
   /** 썸네일 파일 경로 */
@@ -101,6 +101,11 @@ export interface UploadedFile {
   /** 메타데이터 마지막 수정 시간 */
   updated_at: string;
 }
+
+/** 리스트용 썸네일 URL을 포함한 파일 메타데이터 */
+export type UploadedFileInfo = UploadedFile & {
+  signedThumbnailUrl: string | null;
+};
 
 // ================================================================
 // Insert 타입들 (auto-generated 필드 제외)
@@ -136,7 +141,7 @@ export interface UploadedFileInsert {
   storage_bucket: string;
   file_size: number;
   mime_type: string;
-  file_type?: 'image' | 'video' | 'document' | 'other';
+  file_type?: "image" | "video" | "document" | "other";
   has_thumbnail?: boolean;
   thumbnail_path?: string;
   thumbnail_size?: number;
