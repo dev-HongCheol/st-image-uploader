@@ -57,7 +57,7 @@ export default function ContentList({ initialData }: ContentListProps) {
       {folders && folders.length > 0 && (
         <div className="mb-6">
           <h2 className="mb-3 text-lg font-semibold">폴더</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {folders.map((folder) => (
               <Link
                 key={folder.id}
@@ -96,7 +96,7 @@ export default function ContentList({ initialData }: ContentListProps) {
         {isLoading ? (
           <div className="rounded-lg border p-4 text-gray-500">로딩 중...</div>
         ) : files && files.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-4">
             {files.map((file) => (
               <ContentItem key={file.id} file={file} />
             ))}

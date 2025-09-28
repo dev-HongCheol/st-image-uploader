@@ -30,20 +30,19 @@ const ContentItem = ({ file }: props) => {
   };
 
   return (
-    <div className="flex h-52 cursor-pointer flex-col gap-2 rounded-lg border p-4 transition-colors hover:bg-gray-50 md:h-60 dark:hover:bg-gray-900">
+    <div className="flex cursor-pointer flex-col gap-0.5 rounded-lg border p-1.5 transition-colors hover:bg-gray-50 md:gap-2 md:p-4 dark:hover:bg-gray-900">
       {/* title section */}
-
       <div className="flex items-center gap-x-1.5">
         <p>{FileTypeIcon(file.file_type)}</p>
         <p className="flex-1 truncate font-medium">{file.display_filename}</p>
       </div>
 
       {file.signedThumbnailUrl && file.mime_type.includes("image") ? (
-        <div className="flex h-44 flex-1 items-center justify-center md:h-52">
+        <div className="flex h-32 justify-center sm:h-44 md:h-52">
           <img
             src={file.signedThumbnailUrl}
             alt={file.display_filename}
-            className="rounded object-contain"
+            className={`h-full rounded object-fill`}
           />
         </div>
       ) : (
