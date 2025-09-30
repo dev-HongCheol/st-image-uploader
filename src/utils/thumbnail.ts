@@ -13,6 +13,7 @@
  */
 
 import sharp from 'sharp';
+import { HEIC_EXTENSIONS, isHEICFile, SUPPORTED_IMAGE_EXTENSIONS } from './heic';
 
 // heic-convert 라이브러리 타입 정의
 interface HeicConvertOptions {
@@ -43,14 +44,11 @@ export function getImageThumbnailType(fileName: string): ImageThumbnailType {
 
   if (!extension) return "none";
 
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
-  const heicExtensions = ['heic', 'heif'];
-
-  if (heicExtensions.includes(extension)) {
+  if (HEIC_EXTENSIONS.includes(extension)) {
     return "heic";
   }
 
-  if (imageExtensions.includes(extension)) {
+  if (SUPPORTED_IMAGE_EXTENSIONS.includes(extension)) {
     return "image";
   }
 

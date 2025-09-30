@@ -1,10 +1,13 @@
+"use client";
+
 import { UploadedFile, UploadedFileInfo } from "@/types/database";
 import { File, Image, NotebookText, Video } from "lucide-react";
 type props = {
   file: UploadedFileInfo;
+  handleChangeFile: (file: UploadedFile) => void;
 };
 
-const ContentItem = ({ file }: props) => {
+const ContentItem = ({ file, handleChangeFile }: props) => {
   /**
    * 파일 타입에 따른 아이콘 반환
    */
@@ -30,7 +33,10 @@ const ContentItem = ({ file }: props) => {
   };
 
   return (
-    <div className="flex cursor-pointer flex-col gap-0.5 rounded-lg border p-1.5 transition-colors hover:bg-gray-50 md:gap-2 md:p-4 dark:hover:bg-gray-900">
+    <div
+      onClick={() => handleChangeFile(file)}
+      className="flex cursor-pointer flex-col gap-0.5 rounded-lg border p-1.5 transition-colors hover:bg-gray-50 md:gap-2 md:p-4 dark:hover:bg-gray-900"
+    >
       {/* title section */}
       <div className="flex items-center gap-x-1.5">
         <p>{FileTypeIcon(file.file_type)}</p>

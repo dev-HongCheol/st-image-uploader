@@ -1,12 +1,14 @@
 "use client";
 
 import { getContentApi } from "@/lib/api/content-api";
-import { Folder, UploadedFileInfo } from "@/types/database";
+import { Folder, UploadedFile, UploadedFileInfo } from "@/types/database";
 import { useQuery } from "@tanstack/react-query";
 import { Folder as FolderIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ContentItem from "./ContentItem";
+import ContentDetailDialog from "./ContentDetailDialog";
+import { useCallback, useState } from "react";
 
 type ContentListProps = {
   initialData: {
@@ -24,6 +26,11 @@ type ContentListProps = {
 export default function ContentList({ initialData }: ContentListProps) {
   const searchParams = useSearchParams();
   const currentPath = searchParams.get("path") || "";
+  const [selectedFile, setSelectedFile] = useState<UploadedFile>();
+  const handleSelectedFile = useCallback(
+    (file: UploadedFile | undefined) => setSelectedFile(file),
+    [],
+  );
 
   // React Query로 데이터 관리
   const { data, isLoading, error } = useQuery({
@@ -90,6 +97,13 @@ export default function ContentList({ initialData }: ContentListProps) {
 
       {/* 파일 목록 */}
       <div className="mb-8">
+        {selectedFile && (
+          <ContentDetailDialog
+            open={!!selectedFile}
+            file={selectedFile}
+            onClose={handleSelectedFile}
+          />
+        )}
         {files && files.length > 0 && (
           <h2 className="mb-3 text-lg font-semibold">파일</h2>
         )}
@@ -98,7 +112,11 @@ export default function ContentList({ initialData }: ContentListProps) {
         ) : files && files.length > 0 ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-4">
             {files.map((file) => (
-              <ContentItem key={file.id} file={file} />
+              <ContentItem
+                key={file.id}
+                file={file}
+                handleChangeFile={handleSelectedFile}
+              />
             ))}
           </div>
         ) : (
