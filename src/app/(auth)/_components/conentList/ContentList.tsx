@@ -6,9 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Folder as FolderIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import ContentItem from "./ContentItem";
+import { MouseEvent, useCallback, useMemo, useState } from "react";
 import ContentDetailDialog from "./ContentDetailDialog";
-import { useCallback, useState } from "react";
+import ContentItem from "./ContentItem";
+import SelectedFileControlPanel from "./selectedFileControlPanel/SelectedFileControlPanel";
 
 type ContentListProps = {
   initialData: {
@@ -26,9 +27,13 @@ type ContentListProps = {
 export default function ContentList({ initialData }: ContentListProps) {
   const searchParams = useSearchParams();
   const currentPath = searchParams.get("path") || "";
-  const [selectedFile, setSelectedFile] = useState<UploadedFile>();
-  const handleSelectedFile = useCallback(
-    (file: UploadedFile | undefined) => setSelectedFile(file),
+  /** 미리보기 파일 */
+  const [previewFile, setPreviewFile] = useState<UploadedFile>();
+  /** 선택된 파일들 */
+  const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
+
+  const handlePreviewFile = useCallback(
+    (file: UploadedFile | undefined) => setPreviewFile(file),
     [],
   );
 
@@ -41,6 +46,73 @@ export default function ContentList({ initialData }: ContentListProps) {
     refetchOnWindowFocus: false,
   });
 
+  const memoizedFolders = useMemo(() => data?.folders, [data?.folders]);
+  const memoizedFiles = useMemo(() => data?.files, [data?.files]);
+
+  const memoizedSelectedFiles = useMemo(() => {
+    return data.files.filter((file, index) => selectedFileIds.includes(index));
+  }, [selectedFileIds, data.files]);
+
+  const handleMoveComplete = useCallback(() => {
+    // 파일 이동 완료 후 선택 상태 초기화
+    setSelectedFileIds([]);
+  }, []);
+
+  /**
+   * 파일 선택 핸들러
+   * Ctrl: 다중 선택/해제, Shift: 범위 선택
+   */
+  const handleFileSelect = useCallback(
+    (event: MouseEvent<HTMLDivElement>, fileIndex: number) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!data?.files || fileIndex < 0 || fileIndex >= data.files.length) {
+        return;
+      }
+
+      const { ctrlKey, shiftKey } = event;
+      const isCurrentlySelected = selectedFileIds.includes(fileIndex);
+
+      // Ctrl + Shift 조합은 무시
+      if (ctrlKey && shiftKey) return;
+
+      // 일반 클릭: 단일 선택
+      if (!ctrlKey && !shiftKey) {
+        setSelectedFileIds([fileIndex]);
+        return;
+      }
+
+      // Ctrl 클릭: 토글 선택
+      if (ctrlKey) {
+        const newSelection = isCurrentlySelected
+          ? selectedFileIds.filter((id) => id !== fileIndex)
+          : [...selectedFileIds, fileIndex].sort((a, b) => a - b);
+
+        setSelectedFileIds(newSelection);
+        return;
+      }
+
+      // Shift 클릭: 범위 선택
+      if (shiftKey && selectedFileIds.length > 0) {
+        const lastSelected = selectedFileIds[selectedFileIds.length - 1];
+        const start = Math.min(lastSelected, fileIndex);
+        const end = Math.max(lastSelected, fileIndex);
+
+        const rangeSelection = Array.from(
+          { length: end - start + 1 },
+          (_, i) => start + i,
+        );
+        const newSelection = [
+          ...new Set([...selectedFileIds, ...rangeSelection]),
+        ].sort((a, b) => a - b);
+
+        setSelectedFileIds(newSelection);
+      }
+    },
+    [selectedFileIds, data?.files],
+  );
+
   if (error) {
     return (
       <div className="rounded-lg border p-4 text-red-500">
@@ -49,23 +121,24 @@ export default function ContentList({ initialData }: ContentListProps) {
     );
   }
 
+  if (!data) {
+    return (
+      <div className="rounded-lg border p-4 text-gray-500">
+        데이터를 불러오는 중...
+      </div>
+    );
+  }
+
   const { folders, files } = data;
 
   return (
     <div>
-      {/* 현재 경로 표시 */}
-      {currentPath && (
-        <div className="mb-4 text-sm text-gray-500">
-          현재 경로: {currentPath}
-        </div>
-      )}
-
       {/* 폴더 목록 */}
-      {folders && folders.length > 0 && (
+      {memoizedFolders?.length > 0 && (
         <div className="mb-6">
           <h2 className="mb-3 text-lg font-semibold">폴더</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {folders.map((folder) => (
+            {memoizedFolders.map((folder) => (
               <Link
                 key={folder.id}
                 href={`/?path=${encodeURIComponent(
@@ -97,25 +170,38 @@ export default function ContentList({ initialData }: ContentListProps) {
 
       {/* 파일 목록 */}
       <div className="mb-8">
-        {selectedFile && (
+        {previewFile && (
           <ContentDetailDialog
-            open={!!selectedFile}
-            file={selectedFile}
-            onClose={handleSelectedFile}
+            open={!!previewFile}
+            file={previewFile}
+            onClose={handlePreviewFile}
           />
         )}
-        {files && files.length > 0 && (
+
+        {/* 선택된 파일 정보 및 컨트롤러 */}
+        {
+          <SelectedFileControlPanel
+            selectedFiles={memoizedSelectedFiles}
+            currentPath={currentPath}
+            onMoveComplete={handleMoveComplete}
+          />
+        }
+        {memoizedFiles?.length > 0 && (
           <h2 className="mb-3 text-lg font-semibold">파일</h2>
         )}
+
         {isLoading ? (
           <div className="rounded-lg border p-4 text-gray-500">로딩 중...</div>
-        ) : files && files.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-4">
-            {files.map((file) => (
+        ) : memoizedFiles?.length ? (
+          <div className="grid grid-cols-2 gap-3 select-none md:grid-cols-3 2xl:grid-cols-4">
+            {memoizedFiles.map((file, index) => (
               <ContentItem
+                isSelected={selectedFileIds.includes(index)}
                 key={file.id}
                 file={file}
-                handleChangeFile={handleSelectedFile}
+                index={index}
+                handlePreviewFile={handlePreviewFile}
+                handleFileSelect={handleFileSelect}
               />
             ))}
           </div>

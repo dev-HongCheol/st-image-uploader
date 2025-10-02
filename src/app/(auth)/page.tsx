@@ -28,7 +28,7 @@ export default async function MainPage({ searchParams }: Props) {
   let currentPath = path || "";
   let files: UploadedFileInfo[] = [];
   let folders: Folder[] = [];
-  let folderId: string;
+  let folderId: string = "";
 
   if (!currentPath) {
     // 사용자의 루트 폴더 가져오기 또는 생성

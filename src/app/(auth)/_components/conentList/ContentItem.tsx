@@ -2,12 +2,25 @@
 
 import { UploadedFile, UploadedFileInfo } from "@/types/database";
 import { File, Image, NotebookText, Video } from "lucide-react";
+import { MouseEvent } from "react";
 type props = {
   file: UploadedFileInfo;
-  handleChangeFile: (file: UploadedFile) => void;
+  isSelected: boolean;
+  index: number;
+  handlePreviewFile: (file: UploadedFile) => void;
+  handleFileSelect: (
+    event: MouseEvent<HTMLDivElement>,
+    selectFileIndex: number,
+  ) => void;
 };
 
-const ContentItem = ({ file, handleChangeFile }: props) => {
+const ContentItem = ({
+  file,
+  isSelected,
+  index,
+  handlePreviewFile,
+  handleFileSelect,
+}: props) => {
   /**
    * 파일 타입에 따른 아이콘 반환
    */
@@ -17,25 +30,39 @@ const ContentItem = ({ file, handleChangeFile }: props) => {
   ) => {
     const className = isTitle ? "size-4" : "stroke-1 opacity-80";
     const size = isTitle ? 16 : 96; // 24px -> 96px (6rem)
+    const props = {
+      className: className,
+      width: size,
+      height: size,
+    };
 
     switch (fileType) {
       case "document":
-        return (
-          <NotebookText className={className} width={size} height={size} />
-        );
+        return <NotebookText {...props} />;
       case "image":
-        return <Image className={className} width={size} height={size} />;
+        return <Image {...props} />;
       case "video":
-        return <Video className={className} width={size} height={size} />;
+        return <Video {...props} />;
       default:
-        return <File className={className} width={size} height={size} />;
+        return <File {...props} />;
     }
+  };
+
+  const handleClickContent = (
+    event: MouseEvent<HTMLDivElement>,
+    file: UploadedFile,
+  ) => {
+    const { ctrlKey, shiftKey } = event;
+    if (ctrlKey || shiftKey) return;
+    handlePreviewFile(file);
   };
 
   return (
     <div
-      onClick={() => handleChangeFile(file)}
-      className="flex cursor-pointer flex-col gap-0.5 rounded-lg border p-1.5 transition-colors hover:bg-gray-50 md:gap-2 md:p-4 dark:hover:bg-gray-900"
+      onClick={(event: MouseEvent<HTMLDivElement>) =>
+        handleFileSelect(event, index)
+      }
+      className={`flex flex-col gap-0.5 rounded-lg border p-1.5 transition-colors hover:border-dashed md:gap-2 md:p-4 ${isSelected ? "bg-stone-700" : "bg-inherit"}`}
     >
       {/* title section */}
       <div className="flex items-center gap-x-1.5">
@@ -44,7 +71,10 @@ const ContentItem = ({ file, handleChangeFile }: props) => {
       </div>
 
       {file.signedThumbnailUrl && file.mime_type.includes("image") ? (
-        <div className="flex h-32 justify-center sm:h-44 md:h-52">
+        <div
+          onClick={(event) => handleClickContent(event, file)}
+          className="flex h-32 justify-center sm:h-44 md:h-52"
+        >
           <img
             src={file.signedThumbnailUrl}
             alt={file.display_filename}
@@ -52,7 +82,10 @@ const ContentItem = ({ file, handleChangeFile }: props) => {
           />
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center">
+        <div
+          onClick={(event) => handleClickContent(event, file)}
+          className="flex flex-1 items-center justify-center"
+        >
           {FileTypeIcon(file.file_type, false)}
         </div>
       )}
