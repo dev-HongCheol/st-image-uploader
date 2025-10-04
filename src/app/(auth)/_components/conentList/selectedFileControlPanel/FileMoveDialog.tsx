@@ -73,9 +73,9 @@ const FileMoveDialog = ({
     onError: (error) => {
       console.error("폴더 생성 실패:", error);
       toast.error(
-        error instanceof Error 
-          ? error.message 
-          : "폴더 생성 중 오류가 발생했습니다."
+        error instanceof Error
+          ? error.message
+          : "폴더 생성 중 오류가 발생했습니다.",
       );
     },
   });
@@ -85,20 +85,22 @@ const FileMoveDialog = ({
     mutationFn: (data: MoveFilesRequest) => moveFilesApi(data),
     onSuccess: (result) => {
       // 전체 컨텐츠 목록 새로고침
-      queryClient.invalidateQueries({ queryKey: ["content"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["content", currentPath] });
+
       const targetPathDisplay = currentDialogPath || "/";
-      toast.success(`${selectedFiles.length}개의 파일이 '${targetPathDisplay}'로 이동되었습니다.`);
-      
+      toast.success(
+        `${selectedFiles.length}개의 파일이 '${targetPathDisplay}'로 이동되었습니다.`,
+      );
+
       onMoveComplete?.();
       onClose();
     },
     onError: (error) => {
       console.error("파일 이동 실패:", error);
       toast.error(
-        error instanceof Error 
-          ? error.message 
-          : "파일 이동 중 오류가 발생했습니다."
+        error instanceof Error
+          ? error.message
+          : "파일 이동 중 오류가 발생했습니다.",
       );
     },
   });
@@ -109,8 +111,8 @@ const FileMoveDialog = ({
       return;
     }
 
-    const fileIds = selectedFiles.map(file => file.id);
-    
+    const fileIds = selectedFiles.map((file) => file.id);
+
     moveFilesMutation.mutate({
       fileIds,
       targetPath: currentDialogPath || "",
@@ -147,7 +149,7 @@ const FileMoveDialog = ({
       setNewFolderName("");
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[80vh] sm:max-w-[80%]">
@@ -188,14 +190,15 @@ const FileMoveDialog = ({
               <Button
                 onClick={handleMoveFiles}
                 size="sm"
-                disabled={selectedFiles.length === 0 || moveFilesMutation.isPending}
+                disabled={
+                  selectedFiles.length === 0 || moveFilesMutation.isPending
+                }
                 className="flex items-center gap-1"
               >
                 <MoveRight className="h-4 w-4" />
-                {moveFilesMutation.isPending 
-                  ? "이동 중..." 
-                  : `${selectedFiles.length}개 파일 이동`
-                }
+                {moveFilesMutation.isPending
+                  ? "이동 중..."
+                  : `${selectedFiles.length}개 파일 이동`}
               </Button>
             </div>
           </div>
@@ -253,7 +256,10 @@ type FolderNavigationListProps = {
   onFolderNavigate: (folder: Folder) => void;
 };
 
-const FolderNavigationList = ({ currentPath, onFolderNavigate }: FolderNavigationListProps) => {
+const FolderNavigationList = ({
+  currentPath,
+  onFolderNavigate,
+}: FolderNavigationListProps) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["folders", currentPath],
     queryFn: () => getContentApi({ path: currentPath }),
