@@ -256,6 +256,8 @@ const files = await getFolderFiles(folderId, userId, {
 ## todo
 
 - 파일
+  - 모바일 디바이스 터치로 선택
+  - 
   - 선택
     - 표시 상단에 선택된 갯수 표시
     - 컨트롤 : 클릭한 거만 토글로 선택
@@ -263,6 +265,8 @@ const files = await getFolderFiles(folderId, userId, {
   - 폴더 이동
   - 삭제
   - 다운로드
+    - 선택한 파일
+    - 폴더 구조형태로 백업
 
 - 파일 리스트
   - 인피니티 스크롤

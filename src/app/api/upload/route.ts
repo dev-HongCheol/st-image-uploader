@@ -6,6 +6,7 @@ import {
   getOrCreateActiveStorageFolder,
   incrementStorageFolderCount,
 } from "@/utils/folder-system";
+import { extractMediaCreatedDate } from "@/utils/media-metadata";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -85,15 +86,9 @@ async function uploadOriginalFile(
 ): Promise<{
   path: string;
   uploadData: ResStorageUpload;
-  storedFilename: string;
+  filename: string;
 }> {
-  // 고유 파일명 생성 (충돌 방지)
-  const timestamp = Date.now();
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  const fileExtension = file.name.split(".").pop();
-  const storedFilename = `${timestamp}_${randomSuffix}.${fileExtension}`;
-
-  const filePath = `${storageFolder.storage_path}/${storedFilename}`;
+  const filePath = `${storageFolder.storage_path}/${file.name}`;
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from(BUCKET_NAMES.ORIGINALS)
@@ -106,7 +101,7 @@ async function uploadOriginalFile(
     throw uploadError;
   }
 
-  return { path: filePath, uploadData, storedFilename };
+  return { path: filePath, uploadData, filename: file.name };
 }
 
 /**
@@ -139,7 +134,16 @@ async function processFile(
     // 1. 활성 물리적 저장 폴더 가져오기
     const storageFolder = await getOrCreateActiveStorageFolder(userId);
 
-    // 2. 썸네일 처리
+    // 2. 미디어 촬영/생성 일시 추출
+    let mediaCreatedAt: string | null = null;
+    try {
+      mediaCreatedAt = await extractMediaCreatedDate(file);
+    } catch (error) {
+      console.warn(`미디어 메타데이터 추출 실패 (${file.name}):`, error);
+      // 메타데이터 추출 실패는 업로드를 중단하지 않음
+    }
+
+    // 3. 썸네일 처리
     let thumbnailInfo: { path: string; size: number } | null = null;
     try {
       thumbnailInfo = await processThumbnail(file, storageFolder, supabase);
@@ -159,11 +163,11 @@ async function processFile(
       };
     }
 
-    // 3. 원본 파일 업로드
+    // 4. 원본 파일 업로드
     let originalFileInfo: {
       path: string;
       uploadData: ResStorageUpload;
-      storedFilename: string;
+      filename: string;
     };
 
     try {
@@ -187,20 +191,20 @@ async function processFile(
       };
     }
 
-    // 4. 파일 레코드 생성 (targetFolderId를 직접 전달)
+    // 5. 파일 레코드 생성 (targetFolderId를 직접 전달)
     const fileRecord = await createFileRecord(
-      userId, 
-      file, 
+      userId,
+      file,
       {
         filePath: originalFileInfo.path,
-        storedFilename: originalFileInfo.storedFilename,
         thumbnailPath: thumbnailInfo?.path,
         thumbnailSize: thumbnailInfo?.size,
+        mediaCreatedAt: mediaCreatedAt || undefined,
       },
-      targetFolderId || undefined // 기본값: 루트 폴더
+      targetFolderId || undefined, // 기본값: 루트 폴더
     );
 
-    // 5. 데이터베이스에 파일 정보 저장
+    // 6. 데이터베이스에 파일 정보 저장
     const { data: insertedFile, error: insertError } = await supabase
       .from("uploaded_files")
       .insert(fileRecord)
@@ -218,7 +222,7 @@ async function processFile(
       throw insertError;
     }
 
-    // 6. 저장 폴더 카운트 증가
+    // 7. 저장 폴더 카운트 증가
     await incrementStorageFolderCount(storageFolder.id, file.size);
 
     return {

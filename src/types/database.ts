@@ -64,8 +64,6 @@ export interface UploadedFile {
   storage_folder_id: string;
   /** 사용자가 업로드한 원본 파일명 */
   original_filename: string;
-  /** 스토리지에 저장된 실제 파일명 */
-  stored_filename: string;
   /** 사용자에게 표시될 파일명 (이름 변경 시 사용) */
   display_filename?: string;
   /** 스토리지 내 전체 파일 경로 */
@@ -96,6 +94,8 @@ export interface UploadedFile {
   is_starred: boolean;
   /** 사용자 정의 태그 배열 */
   tags?: string[];
+  /** 미디어 촬영/생성 일시 (사진: EXIF, 동영상: 메타데이터에서 추출) */
+  media_created_at?: string;
   /** 파일 생성 시간 */
   created_at: string;
   /** 메타데이터 마지막 수정 시간 */
@@ -135,7 +135,6 @@ export interface UploadedFileInsert {
   folder_id: string;
   storage_folder_id: string;
   original_filename: string;
-  stored_filename: string;
   display_filename?: string;
   file_path: string;
   storage_bucket: string;
@@ -151,6 +150,7 @@ export interface UploadedFileInsert {
   last_accessed_at?: string;
   is_starred?: boolean;
   tags?: string[];
+  media_created_at?: string;
 }
 
 // ================================================================

@@ -611,7 +611,7 @@ export async function getFolderFiles(
     fileType?: "image" | "video" | "document" | "other";
     limit?: number;
     offset?: number;
-    sortBy?: "created_at" | "name" | "size";
+    sortBy?: "created_at" | "name" | "size" | "media_created_at";
     sortOrder?: "asc" | "desc";
   } = {},
 ): Promise<UploadedFileInfo[]> {
@@ -630,9 +630,18 @@ export async function getFolderFiles(
   }
 
   // 정렬 적용
-  const sortBy = options.sortBy || "created_at";
+  const sortBy = options.sortBy || "media_created_at";
   const sortOrder = options.sortOrder || "desc";
-  query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+  // media_created_at 정렬 시 NULL 값 처리
+  if (sortBy === "media_created_at") {
+    // media_created_at 기준 정렬 (NULL 값은 뒤로, 최신순)
+    query = query.order(sortBy, { ascending: sortOrder === "asc", nullsFirst: false });
+    // 같은 촬영일이거나 NULL인 경우 업로드 시간 기준으로 2차 정렬
+    query = query.order("created_at", { ascending: sortOrder === "asc" });
+  } else {
+    query = query.order(sortBy, { ascending: sortOrder === "asc" });
+  }
 
   // 페이지네이션 적용
   if (options.limit) {
@@ -761,9 +770,9 @@ export async function createFileRecord(
   file: File,
   uploadInfo: {
     filePath: string;
-    storedFilename: string;
     thumbnailPath?: string;
     thumbnailSize?: number;
+    mediaCreatedAt?: string;
   },
   targetFolderId?: string,
 ): Promise<UploadedFileInsert> {
@@ -801,7 +810,6 @@ export async function createFileRecord(
     folder_id: logicalFolderId, // 논리적 폴더 위치 (루트 폴더 또는 지정된 폴더)
     storage_folder_id: storageFolder.id, // 물리적 저장 위치
     original_filename: file.name,
-    stored_filename: uploadInfo.storedFilename,
     display_filename: file.name, // 초기값은 원본 파일명
     file_path: uploadInfo.filePath,
     storage_bucket: "originals",
@@ -813,5 +821,6 @@ export async function createFileRecord(
     thumbnail_size: uploadInfo.thumbnailSize,
     upload_status: "completed",
     is_starred: false,
+    media_created_at: uploadInfo.mediaCreatedAt,
   };
 }
