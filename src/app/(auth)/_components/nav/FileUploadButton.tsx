@@ -2,7 +2,9 @@
 
 import { UploadResult } from "@/app/api/upload/route";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { CloudUpload } from "lucide-react";
+import { useParams } from "next/navigation";
 import { ChangeEvent, MouseEvent, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,10 +13,11 @@ const batchSize = 10;
 const FileUploadButton = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const queryClient = useQueryClient();
+  const { path } = useParams();
 
   const handleClickFileBtn = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
-      console.log("🚀 ~ handleClickFileBtn ~ event_", event);
       event.preventDefault();
       const fileInput = fileInputRef.current;
       if (!fileInput) return;
@@ -26,9 +29,7 @@ const FileUploadButton = () => {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-
     if (!files || files?.length === 0) return;
-    console.log("🚀 ~ handleFileChange ~ files_", files);
 
     fileUpload([...files]);
   };
@@ -41,9 +42,7 @@ const FileUploadButton = () => {
     // TODO: 동기화가 없어..문제없을까? 테스트 필요
     for (let i = 0; i < files.length; i += batchSize) {
       const uploadBatchFiles = files.slice(i, i + batchSize);
-      console.log(
-        `🚀 ~ ${Math.floor(i / batchSize) + 1}번째 배치 업로드 중 (${uploadBatchFiles.length}개 파일)`,
-      );
+
       try {
         const formData = new FormData();
 
@@ -73,6 +72,7 @@ const FileUploadButton = () => {
             }
           });
 
+          queryClient.invalidateQueries({ queryKey: ["content", path ?? ""] });
           new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {

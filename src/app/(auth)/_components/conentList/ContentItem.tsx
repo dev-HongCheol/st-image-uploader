@@ -52,6 +52,7 @@ const ContentItem = ({
     event: MouseEvent<HTMLDivElement>,
     file: UploadedFile,
   ) => {
+    event.stopPropagation();
     const { ctrlKey, shiftKey } = event;
     if (ctrlKey || shiftKey) return;
     handlePreviewFile(file);

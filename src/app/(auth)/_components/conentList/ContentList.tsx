@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Folder as FolderIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { MouseEvent, useCallback, useMemo, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from "react";
 import ContentDetailDialog from "./ContentDetailDialog";
 import ContentItem from "./ContentItem";
 import SelectedFileControlPanel from "./selectedFileControlPanel/SelectedFileControlPanel";
@@ -37,8 +37,13 @@ export default function ContentList({ initialData }: ContentListProps) {
     [],
   );
 
+  // 폴더를 이동하면 선택된 파일 초기화
+  useEffect(() => {
+    setSelectedFileIds([]);
+  }, [currentPath]);
+
   // React Query로 데이터 관리
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, refetch, error } = useQuery({
     queryKey: ["content", currentPath],
     queryFn: () => getContentApi({ path: currentPath }),
     initialData,
@@ -56,6 +61,7 @@ export default function ContentList({ initialData }: ContentListProps) {
   const handleMoveComplete = useCallback(() => {
     // 파일 이동 완료 후 선택 상태 초기화
     setSelectedFileIds([]);
+    refetch();
   }, []);
 
   /**
@@ -79,7 +85,7 @@ export default function ContentList({ initialData }: ContentListProps) {
 
       // 일반 클릭: 단일 선택
       if (!ctrlKey && !shiftKey) {
-        setSelectedFileIds([fileIndex]);
+        setSelectedFileIds(isCurrentlySelected ? [] : [fileIndex]);
         return;
       }
 
@@ -133,9 +139,18 @@ export default function ContentList({ initialData }: ContentListProps) {
 
   return (
     <div>
+      {/* 선택된 파일 정보 및 컨트롤러 */}
+      {
+        <SelectedFileControlPanel
+          selectedFiles={memoizedSelectedFiles}
+          currentPath={currentPath}
+          onMoveComplete={handleMoveComplete}
+        />
+      }
+
       {/* 폴더 목록 */}
       {memoizedFolders?.length > 0 && (
-        <div className="mb-6">
+        <div className="">
           <h2 className="mb-3 text-lg font-semibold">폴더</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {memoizedFolders.map((folder) => (
@@ -178,14 +193,6 @@ export default function ContentList({ initialData }: ContentListProps) {
           />
         )}
 
-        {/* 선택된 파일 정보 및 컨트롤러 */}
-        {
-          <SelectedFileControlPanel
-            selectedFiles={memoizedSelectedFiles}
-            currentPath={currentPath}
-            onMoveComplete={handleMoveComplete}
-          />
-        }
         {memoizedFiles?.length > 0 && (
           <h2 className="mb-3 text-lg font-semibold">파일</h2>
         )}
